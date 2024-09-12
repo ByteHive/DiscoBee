@@ -1,0 +1,17 @@
+{
+  "name": "discobee",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.19.2",
+    "p3x-xml2json": "^2024.4.121",
+    "xml2js": "^0.6.2"
+  }
+}

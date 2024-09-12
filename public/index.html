@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiscoBee by ByteHive</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .top-bar {
+            background-color: #333;
+            color: white;
+            text-align: left;
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+        .content {
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #sourceList {
+            list-style-type: none;
+            padding: 0;
+        }
+        #sourceList li {
+            background-color: #fff;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #refreshButton {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #refreshButton:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        DiscoBee by Bytehive - v0.1
+    </div>
+    <div class="content">
+        <h1>NDI Sources</h1>
+        <button id="refreshButton">Refresh Sources</button>
+        <ul id="sourceList"></ul>
+    </div>
+
+    <script>
+        const sourceList = document.getElementById('sourceList');
+        const refreshButton = document.getElementById('refreshButton');
+
+        async function fetchSources() {
+            try {
+                const response = await axios.get('/api/sources');
+                const sources = response.data;
+                sourceList.innerHTML = '';
+                sources.forEach(source => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <strong>Name:</strong> ${source.name}<br>
+                        <strong>IP:</strong> ${source.address}:${source.port}<br>
+                        <strong>Groups:</strong> ${source.groups.join(', ')}
+                    `;
+                    sourceList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching sources:', error);
+                sourceList.innerHTML = '<li>Failed to fetch NDI sources</li>';
+            }
+        }
+
+        refreshButton.addEventListener('click', fetchSources);
+
+        // Initial fetch
+        fetchSources();
+    </script>
+</body>
+</html>
