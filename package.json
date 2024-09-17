@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "main": "server.js",
   "scripts": {
-    "build": "pkg . --targets node18-win-x64,node18-linux-x64",
+    "build": "pkg .",
     "start": "node server.js"
   },
   "bin": "server.js",
@@ -18,5 +18,15 @@
   },
   "devDependencies": {
     "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "scripts": "*.js",
+    "assets": [
+      "public/**/*",
+      "views/**/*"
+    ],
+    "targets": [ "node18-win-x64",
+    "node18-linux-x64" ],
+    "outputPath": "dist"
   }
 }
