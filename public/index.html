@@ -22,7 +22,7 @@
         .content {
             padding: 20px;
         }
-        h1 {
+        h1, h2 {
             color: #333;
         }
         #sourceList {
@@ -36,17 +36,45 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        #refreshButton, #searchInput {
+            padding: 10px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
         #refreshButton {
-            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
         }
         #refreshButton:hover {
             background-color: #45a049;
+        }
+        #searchInput {
+            width: 200px;
+        }
+        .instance-group {
+            margin-bottom: 20px;
+            background-color: #e9e9e9;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .copy-button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .copy-button:hover {
+            background-color: #0056b3;
+        }
+        ul{
+            list-style: none!important;
         }
     </style>
 </head>
@@ -56,35 +84,101 @@
     </div>
     <div class="content">
         <h1>NDI Sources</h1>
+        <input type="text" id="searchInput" placeholder="Search sources...">
         <button id="refreshButton">Refresh Sources</button>
-        <ul id="sourceList"></ul>
+        <div id="sourceList"></div>
     </div>
 
     <script>
         const sourceList = document.getElementById('sourceList');
         const refreshButton = document.getElementById('refreshButton');
+        const searchInput = document.getElementById('searchInput');
 
         async function fetchSources() {
             try {
                 const response = await axios.get('/api/sources');
                 const sources = response.data;
-                sourceList.innerHTML = '';
-                sources.forEach(source => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <strong>Name:</strong> ${source.name}<br>
-                        <strong>IP:</strong> ${source.address}:${source.port}<br>
-                        <strong>Groups:</strong> ${source.groups.join(', ')}
-                    `;
-                    sourceList.appendChild(li);
-                });
+                displaySources(sources);
             } catch (error) {
                 console.error('Error fetching sources:', error);
-                sourceList.innerHTML = '<li>Failed to fetch NDI sources</li>';
+                sourceList.innerHTML = '<p>Failed to fetch NDI sources</p>';
             }
         }
 
+        function displaySources(sources) {
+            sourceList.innerHTML = '';
+            const instances = groupByInstance(sources);
+            
+            for (const [instance, instanceSources] of Object.entries(instances)) {
+                const instanceDiv = document.createElement('div');
+                instanceDiv.className = 'instance-group';
+                instanceDiv.innerHTML = `<h2>${instance}</h2>`;
+                
+                const ul = document.createElement('ul');
+                instanceSources.forEach(source => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <strong>Name:</strong> ${source.name}
+                        <button class="copy-button" data-name="${source.name}">Copy</button><br>
+                        <strong>IP:</strong> ${source.address}:${source.port}<br>
+                        <strong>Groups:</strong> ${source.groups.join(', ')}
+                    `;
+                    ul.appendChild(li);
+                });
+                
+                instanceDiv.appendChild(ul);
+                sourceList.appendChild(instanceDiv);
+            }
+
+            // Add event listeners to copy buttons
+            document.querySelectorAll('.copy-button').forEach(button => {
+                button.addEventListener('click', copySourceName);
+            });
+        }
+
+        function groupByInstance(sources) {
+            return sources.reduce((acc, source) => {
+                const instance = source.address;
+                if (!acc[instance]) {
+                    acc[instance] = [];
+                }
+                acc[instance].push(source);
+                return acc;
+            }, {});
+        }
+
+        function filterSources() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const sourceItems = sourceList.getElementsByTagName('li');
+            const instanceGroups = sourceList.getElementsByClassName('instance-group');
+            
+            Array.from(sourceItems).forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+
+            Array.from(instanceGroups).forEach(group => {
+                const visibleItems = group.querySelectorAll('li[style="display: """]');
+                group.style.display = visibleItems.length > 0 ? '' : 'none';
+            });
+        }
+
+        function copySourceName(event) {
+            const sourceName = event.target.getAttribute('data-name');
+            navigator.clipboard.writeText(sourceName).then(() => {
+                // Temporarily change button text to indicate successful copy
+                const originalText = event.target.textContent;
+                event.target.textContent = 'Copied!';
+                setTimeout(() => {
+                    event.target.textContent = originalText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+
         refreshButton.addEventListener('click', fetchSources);
+        searchInput.addEventListener('input', filterSources);
 
         // Initial fetch
         fetchSources();

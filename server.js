@@ -22,7 +22,7 @@ const getSources = (retries = 3) => {
     const client = new Net.Socket();
     let chunks = "";
 
-    const tryConnect = (attemptsLeft) => {
+    
       client.connect({ port: 5959, host: '127.0.0.1' }, () => {
         console.log('Connection established with the NDI discovery server.');
         
@@ -36,9 +36,15 @@ const getSources = (retries = 3) => {
 
       client.on('data', async (chunk) => {
         chunks += chunk.toString();
+        
         if (chunks.includes("<sources>") && chunks.includes("</sources>")) {
           try {
             const xmlData = chunks.substring(chunks.indexOf("<sources>"), chunks.indexOf("</sources>") + 10);
+            // check if there are no sources available
+            if (xmlData === "<sources></sources>") {
+              resolve([]);
+              return;
+            }
             const result = await parseXml(xmlData);
             const sources = result.sources.source;
             const formattedSources = sources.map((item) => ({
@@ -46,11 +52,15 @@ const getSources = (retries = 3) => {
               address: item.address[0],
               port: item.port[0],
               groups: item.groups[0].group
-            }));
+            }))
+            //close the connection
             resolve(formattedSources);
+            
           } catch (error) {
-            console.log("Error parsing XML:", error);
+            
+           // console.log("Error parsing XML:", error);
             reject(error);
+
           }
           
         }
@@ -58,32 +68,17 @@ const getSources = (retries = 3) => {
 
       client.on('error', (error) => {
         console.log('Error:', error);
-        if (attemptsLeft > 0) {
-          console.log(`Retrying... ${attemptsLeft} attempts left.`);
-          setTimeout(() => tryConnect(attemptsLeft - 1), 2000);
-        } else {
           reject(error);
-        }
-      });
+        })
+      
 
       client.on('close', () => {
         console.log('Connection closed');
       });
 
-      // Set a timeout for the connection attempt
-      client.setTimeout(5000, () => {
-        console.log('Connection attempt timed out');
-        client.destroy();
-        if (attemptsLeft > 0) {
-          console.log(`Retrying... ${attemptsLeft} attempts left.`);
-          setTimeout(() => tryConnect(attemptsLeft - 1), 2000);
-        } else {
-          reject(new Error('Connection timed out after all retries'));
-        }
-      });
-    };
+      //close the connection
+      
 
-    tryConnect(retries);
   });
 };
 
