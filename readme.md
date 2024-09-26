@@ -7,7 +7,7 @@ DiscoBee is a free tool developed by ByteHive that simplifies the process of vie
 - Display all NDI sources registered on a Discovery server
 - Currently supports localhost
 - Includes an API for programmatic access
-
+- search for String in Source
 ## Usage
 
 Just run it by installing it with node.js first or use a Binary provided here : 
@@ -30,13 +30,12 @@ We're actively working on improving DiscoBee. Here are some features in developm
 
 - Support for multiple Discovery Servers and the ability to compare them
 - Expanding support to hosts other than localhost
-- Implementing a consistent TCP connection
 
 
 
 ## Contact
 
-Please open an Issue for Feature Requests and Issue. 
+Please open an Issue for Feature Requests and Issues. 
 
 ---
 
