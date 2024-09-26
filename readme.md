@@ -1,16 +1,22 @@
 # DiscoBee
 
-DiscoBee is a free tool developed by ByteHive that simplifies the process of viewing NDI (Network Device Interface) sources registered on a Discovery server.
+DiscoBee is a free tool developed by ByteHive that simplifies viewing NDI — Network Device Interface  sources registered on a Discovery server.
 
 ## Features
 
 - Display all NDI sources registered on a Discovery server
 - Currently supports localhost
 - Includes an API for programmatic access
-- search for String in Source
+- Search for String in Source
 ## Usage
 
-Just run it by installing it with node.js first or use a Binary provided here : 
+For Production environments, we recommend using one of the Prebuilt Binaries.
+
+
+## Development
+Clone this Repository and then run the following commands:
+ npm install 
+ npm run start
 
 
 ## API
