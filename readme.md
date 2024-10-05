@@ -55,7 +55,6 @@ list all the available sources
 ## Current Limitations
 
 - Only supports localhost as the Discovery server
-- Opens a TCP port for every new check 
 - No caching 
 - No automatic updates
 
