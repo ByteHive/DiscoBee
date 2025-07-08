@@ -1,3 +1,5 @@
 
 /node_modules
 /dist
+public/vue.js
+public/axios.js

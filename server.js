@@ -3,7 +3,7 @@ const Net = require('net');
 const xml2js = require('xml2js');
 const path = require('path');
 const app = express();
-const port = 80;
+const port = process.env.PORT || 80;
 
 let persistentClient = null;
 let isConnecting = false;

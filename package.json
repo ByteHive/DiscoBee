@@ -4,6 +4,7 @@
   "main": "server.js",
   "scripts": {
     "build": "pkg .",
+    "build-frontend": "cp node_modules/vue/dist/vue.global.js public/vue.js && cp node_modules/axios/dist/axios.min.js public/axios.js",
     "start": "node server.js"
   },
   "bin": "server.js",
@@ -12,8 +13,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.10.0",
     "express": "^4.19.2",
     "p3x-xml2json": "^2024.4.121",
+    "vue": "^3.5.17",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
@@ -25,8 +28,10 @@
       "public/**/*",
       "views/**/*"
     ],
-    "targets": [ "node18-win-x64",
-    "node18-linux-x64" ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64"
+    ],
     "outputPath": "dist"
   }
 }

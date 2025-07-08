@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiscoBee by ByteHive</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="/axios.js"></script>
+    <script src="/vue.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -79,109 +80,112 @@
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        DiscoBee by Bytehive - v0.1
-    </div>
-    <div class="content">
-        <h1>NDI Sources</h1>
-        <input type="text" id="searchInput" placeholder="Search sources...">
-        <button id="refreshButton">Refresh Sources</button>
-        <div id="sourceList"></div>
+    <div id="app">
+        <div class="top-bar">
+            DiscoBee by Bytehive - v0.1
+        </div>
+        <div class="content">
+            <h1>NDI Sources</h1>
+            <input type="text" v-model="searchTerm" placeholder="Search sources...">
+            <button @click="fetchSources">Refresh Sources</button>
+            <div id="sourceList">
+                <div v-if="sources.length === 0" v-show="!loading">
+                    <p>No NDI sources found</p>
+                </div>
+                <div v-if="loading">
+                    <p>Loading sources...</p>
+                </div>
+                <div v-if="error">
+                    <p>Failed to fetch NDI sources</p>
+                </div>
+                <div v-for="(instanceSources, instance) in filteredSourcesByInstance" :key="instance" class="instance-group" v-show="instanceSources.length > 0">
+                    <h2>{{ instance }}</h2>
+                    <ul>
+                        <li v-for="source in instanceSources" :key="source.name">
+                            <strong>Name:</strong> {{ source.name }}
+                            <button class="copy-button" @click="copySourceName(source.name)">{{ getCopyButtonText(source.name) }}</button><br>
+                            <strong>IP:</strong> {{ source.address }}:{{ source.port }}<br>
+                            <strong>Groups:</strong> {{ source.groups.join(', ') }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const sourceList = document.getElementById('sourceList');
-        const refreshButton = document.getElementById('refreshButton');
-        const searchInput = document.getElementById('searchInput');
+        if (typeof Vue === 'undefined') {
+            console.error('Vue is not loaded!');
+            document.body.innerHTML = '<div style="color: red; padding: 20px;">Vue.js failed to load. Check your internet connection or CDN access.</div>';
+        } else {
+            const { createApp } = Vue;
 
-        async function fetchSources() {
-            try {
-                const response = await axios.get('/api/sources');
-                const sources = response.data;
-                displaySources(sources);
-            } catch (error) {
-                console.error('Error fetching sources:', error);
-                sourceList.innerHTML = '<p>Failed to fetch NDI sources</p>';
-            }
-        }
-
-        function displaySources(sources) {
-            sourceList.innerHTML = '';
-            const instances = groupByInstance(sources);
-            
-            for (const [instance, instanceSources] of Object.entries(instances)) {
-                const instanceDiv = document.createElement('div');
-                instanceDiv.className = 'instance-group';
-                instanceDiv.innerHTML = `<h2>${instance}</h2>`;
-                
-                const ul = document.createElement('ul');
-                instanceSources.forEach(source => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <strong>Name:</strong> ${source.name}
-                        <button class="copy-button" data-name="${source.name}">Copy</button><br>
-                        <strong>IP:</strong> ${source.address}:${source.port}<br>
-                        <strong>Groups:</strong> ${source.groups.join(', ')}
-                    `;
-                    ul.appendChild(li);
-                });
-                
-                instanceDiv.appendChild(ul);
-                sourceList.appendChild(instanceDiv);
-            }
-
-            // Add event listeners to copy buttons
-            document.querySelectorAll('.copy-button').forEach(button => {
-                button.addEventListener('click', copySourceName);
-            });
-        }
-
-        function groupByInstance(sources) {
-            return sources.reduce((acc, source) => {
-                const instance = source.address;
-                if (!acc[instance]) {
-                    acc[instance] = [];
+            createApp({
+                data() {
+                    return {
+                        sources: [],
+                        searchTerm: '',
+                        loading: false,
+                        error: false,
+                        copyButtonStates: {}
+                    }
+                },
+                computed: {
+                    filteredSourcesByInstance() {
+                        const filtered = this.sources.filter(source => {
+                            const searchLower = this.searchTerm.toLowerCase();
+                            return source.name.toLowerCase().includes(searchLower) ||
+                                   source.address.toLowerCase().includes(searchLower) ||
+                                   source.groups.some(group => group.toLowerCase().includes(searchLower));
+                        });
+                        
+                        return this.groupByInstance(filtered);
+                    }
+                },
+                methods: {
+                    async fetchSources() {
+                        this.loading = true;
+                        this.error = false;
+                        try {
+                            const response = await axios.get('/api/sources');
+                            this.sources = response.data;
+                        } catch (error) {
+                            console.error('Error fetching sources:', error);
+                            this.error = true;
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+                    groupByInstance(sources) {
+                        return sources.reduce((acc, source) => {
+                            const instance = source.address;
+                            if (!acc[instance]) {
+                                acc[instance] = [];
+                            }
+                            acc[instance].push(source);
+                            return acc;
+                        }, {});
+                    },
+                    async copySourceName(sourceName) {
+                        try {
+                            await navigator.clipboard.writeText(sourceName);
+                            this.copyButtonStates[sourceName] = 'Copied!';
+                            setTimeout(() => {
+                                this.copyButtonStates[sourceName] = 'Copy';
+                            }, 1500);
+                        } catch (err) {
+                            console.error('Failed to copy text: ', err);
+                        }
+                    },
+                    getCopyButtonText(sourceName) {
+                        return this.copyButtonStates[sourceName] || 'Copy';
+                    }
+                },
+                mounted() {
+                    this.fetchSources();
                 }
-                acc[instance].push(source);
-                return acc;
-            }, {});
+            }).mount('#app');
         }
-
-        function filterSources() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const sourceItems = sourceList.getElementsByTagName('li');
-            const instanceGroups = sourceList.getElementsByClassName('instance-group');
-            
-            Array.from(sourceItems).forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-
-            Array.from(instanceGroups).forEach(group => {
-                const visibleItems = group.querySelectorAll('li[style="display: """]');
-                group.style.display = visibleItems.length > 0 ? '' : 'none';
-            });
-        }
-
-        function copySourceName(event) {
-            const sourceName = event.target.getAttribute('data-name');
-            navigator.clipboard.writeText(sourceName).then(() => {
-                // Temporarily change button text to indicate successful copy
-                const originalText = event.target.textContent;
-                event.target.textContent = 'Copied!';
-                setTimeout(() => {
-                    event.target.textContent = originalText;
-                }, 1500);
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
-        }
-
-        refreshButton.addEventListener('click', fetchSources);
-        searchInput.addEventListener('input', filterSources);
-
-        // Initial fetch
-        fetchSources();
     </script>
 </body>
 </html>
