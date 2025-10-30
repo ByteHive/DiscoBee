@@ -2,7 +2,12 @@ const express = require('express');
 const Net = require('net');
 const xml2js = require('xml2js');
 const path = require('path');
+const http = require('http');
+const WebSocket = require('ws');
+
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 const port = 80;
 
 let persistentClient = null;
@@ -122,6 +127,31 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(port, () => {
+wss.on('connection', (ws) => {
+  console.log('Client connected via WebSocket');
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+  });
+});
+
+const broadcastSources = async () => {
+  try {
+    const sources = await getSources();
+    const message = JSON.stringify({ type: 'sources', data: sources });
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  } catch (error) {
+    console.error('Error broadcasting sources:', error);
+  }
+};
+
+setInterval(broadcastSources, 2000);
+
+server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
