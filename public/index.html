@@ -430,6 +430,44 @@
         .instance-group {
             animation: fadeIn 0.3s ease;
         }
+
+        .footer {
+            margin-top: 80px;
+            padding: 32px;
+            text-align: center;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .footer-text {
+            color: #94a3b8;
+            font-size: 15px;
+        }
+
+        .footer-link {
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .footer-link:hover {
+            color: #3b82f6;
+        }
+
+        .heart {
+            color: #ef4444;
+            display: inline-block;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% {
+                transform: scale(1);
+            }
+            25% {
+                transform: scale(1.1);
+            }
+        }
     </style>
 </head>
 <body>
@@ -473,6 +511,13 @@
         </div>
 
         <div id="sourceList"></div>
+
+        <div class="footer">
+            <p class="footer-text">
+                Built with <span class="heart">♥</span> by
+                <a href="https://bytehive.tools" target="_blank" rel="noopener noreferrer" class="footer-link">ByteHive</a>
+            </p>
+        </div>
     </div>
 
     <script>
